@@ -1,61 +1,39 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect } from 'react'; 
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchPopularMovies, fetchTrendingMovies } from '../redux/MovieSlice'; 
+import { RootState, AppDispatch } from '../redux/Store'; 
 
-interface Movie {
-  id: number;
-  title: string;
-  poster_path: string;
-}
+const MovieList: React.FC = () => { 
+  const dispatch = useDispatch<AppDispatch>(); 
+  const { popularMovies, trendingMovies, loading, error } = useSelector( 
+    (state: RootState) => state.movies
+  ); 
 
-const Home = () => {
-  const [movies, setMovies] = useState<Movie[]>([]); 
-  const [loading, setLoading] = useState<boolean>(true); 
-  const [error, setError] = useState<string | null>(null); 
+  useEffect(() => { 
+    dispatch(fetchPopularMovies()); 
+    dispatch(fetchTrendingMovies()); 
+  }, [dispatch]); 
 
-  useEffect(() => {
-    const fetchMovies = async () => { 
-        try {
-          const apiKey = import.meta.env.VITE_TMDB_API_KEY; 
-          if (!apiKey) {
-            setError("API Key is missing.");
-            setLoading(false);
-            return;
-          }
-      
-          const { data } = await axios.get(
-            `https://api.themoviedb.org/3/movie/Upcoming?api_key=${apiKey}&language=en-US`
-          ); 
-      
-          setMovies(data.results); 
-        } catch (error) {
-          setError("Failed to fetch movies"); 
-        } finally {
-          setLoading(false); 
-        }
-      };
-    fetchMovies();
-  }, []);
+  if (loading) return <p>Loading...</p>; 
+  if (error) return <p>{error}</p>; 
 
-  if (loading) { 
-    return <h2>Loading movies...</h2>;
-  }
+  return ( 
+    <div> 
+      <h2>Popular Movies</h2>
+      <div> 
+        {popularMovies.map((movie: any) => ( 
+          <div key={movie.id}>{movie.title}</div> 
+        ))} 
+      </div>
 
-  if (error) { 
-    return <h2>{error}</h2>;
-  }
-
-  return (
-    <div style={{ padding: '20px' }}>
-      <h2>Upcoming Movies</h2>
-      <ul>
-        {movies.map((movie) => (
-          <li key={movie.id}> 
-            <h3>{movie.title}</h3>
-          </li>
-        ))}
-      </ul>
-    </div>
+      <h2>Trending Movies</h2> 
+      <div> 
+        {trendingMovies.map((movie: any) => ( 
+          <div key={movie.id}>{movie.title}</div> 
+        ))} 
+      </div> 
+    </div> 
   );
-};
+}; 
 
-export default Home;
+export default MovieList;
